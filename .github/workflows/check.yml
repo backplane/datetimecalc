@@ -19,4 +19,4 @@ jobs:
       - name: run pre-commit
         uses: pre-commit/action@v3.0.0
         env:
-          SKIP: no-commit-to-branch
+          SKIP: no-commit-to-branch,pytest

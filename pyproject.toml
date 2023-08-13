@@ -11,7 +11,7 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-
+dynamic = ["dependencies"]
 
 [project.urls]
 Homepage = "https://github.com/backplane/datetimecalc"
@@ -21,10 +21,9 @@ Changelog = "https://github.com/backplane/datetimecalc/releases"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[build-system]
-requires = [
-    "parsedatetime ~= 2.6",
-]
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules src"
