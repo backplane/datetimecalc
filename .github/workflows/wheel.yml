@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  wheels:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Version check
+        run: |
+          #!/bin/sh
+          # verify that the tag matches the version string in pyproject.toml
+          set -eux
+          TAG="${GITHUB_REF##refs/tags/v}"  # e.g. 1.0.0
+          grep -qE "^version = \"$TAG\"$" pyproject.toml
+
+      # https://github.com/actions/setup-python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip' # caching pip dependencies
+
+      # # https://github.com/pypa/cibuildwheel
+      # - name: cibuildwheel
+      #   # to supply cibuildwheel options, put them in 'env', like:
+      #   # env:
+      #   #   CIBW_SOME_OPTION: value
+      #   run: |
+      #     #!/bin/sh
+      #     set -eux
+      #     pip install cibuildwheel
+      #     python -m cibuildwheel --output-dir wheelhouse
+
+      - name: pip wheel
+        run: |
+          #!/bin/sh
+          set -eux
+          pip wheel -w wheelhouse .
+
+      # https://github.com/actions/upload-artifact
+      - uses: actions/upload-artifact@v3
+        with:
+          retention-days: 30
+          path: ./wheelhouse/*.whl
+
+      - name: create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          #!/bin/sh
+          set -eux
+          TAG="${GITHUB_REF##refs/tags/v}"  # e.g. 1.0.0
+          gh release create "v${TAG}" --generate-notes ./wheelhouse/*.whl

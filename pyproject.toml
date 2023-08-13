@@ -1,0 +1,32 @@
+[project]
+name = "datetimecalc"
+version = "0.1.0"
+description = "calculator for datetimes and timedeltas"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+authors = [
+  {name = "Backplane", email = "actualben@users.noreply.github.com"},
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/backplane/datetimecalc"
+Repository = "https://github.com/backplane/datetimecalc.git"
+Changelog = "https://github.com/backplane/datetimecalc/releases"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = [
+    "parsedatetime ~= 2.6",
+]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules src"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+pythonpath = "src/"
