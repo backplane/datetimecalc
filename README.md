@@ -32,3 +32,5 @@ result = parse_temporal_expr('2025-01-02 - 2023-01-01')
 print(result)
 # Output: datetime.timedelta(days=732)
 ```
+
+ For more information, see [the api docs](docs/index.md)
