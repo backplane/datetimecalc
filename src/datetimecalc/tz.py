@@ -9,7 +9,9 @@ import zoneinfo
 from typing import Dict, List, Optional
 
 # tz_additions contains the daylight saving time (DST) variants of the
-# short timezones: 'CET', 'EET', 'EST', 'GB', 'HST', 'MET', 'MST', 'NZ', 'WET'
+# corresponding legacy short identifiers (these may be superseded by the local
+# timezone if they match names in time.tzname) - for example BST could evaluate
+# to Bangladesh Standard Time if the code is running in a Bangladesh timezone
 tz_additions: Dict[str, str] = {
     # corresponding to European or commonwealth short timezone names
     "CEST": "Europe/Paris",  # Central European Summer Time - see also "CET"
@@ -98,13 +100,15 @@ def gen_tz_regex() -> re.Pattern:
 tz_regex = gen_tz_regex()
 
 
-def search_tz(input_date: str) -> Optional[datetime.tzinfo]:
+def search_tz(input_date: str, fullmatch: bool = False) -> Optional[datetime.tzinfo]:
     """
     Searches for a timezone name in an input date string and returns the
-    corresponding ZoneInfo object.
+    corresponding ZoneInfo object. If 'fullmatch' is True, the entire input_date
+    string must be a timezone name.
 
     Args:
         input_date: A string representing a date with a timezone in it.
+        fullmatch: Indicates that the search must match the entire input_date string.
 
     Returns:
         The ZoneInfo object corresponding to the timezone if found, else None.
@@ -116,7 +120,8 @@ def search_tz(input_date: str) -> Optional[datetime.tzinfo]:
         >>> search_tz("Sun 13 Aug 2023 09:08:52 AM EST")
         zoneinfo.ZoneInfo(key='EST')
     """
-    match = tz_regex.search(input_date)
+    search_func = tz_regex.fullmatch if fullmatch else tz_regex.search
+    match = search_func(input_date)
     if not match:
         return None
     name = match.group(1)

@@ -2,12 +2,35 @@
 import logging
 import operator
 import re
-from datetime import datetime, timedelta
-from typing import Any, Union
+from datetime import datetime, timedelta, tzinfo
+from typing import Any, TypeAlias, Union
 
 import parsedatetime
 
+from .timedelta import duration_to_string
 from .tz import search_tz
+
+TemporalObject: TypeAlias = Union[datetime, timedelta, tzinfo]
+
+
+def parse_timezone_str(input_str: str) -> tzinfo:
+    """
+    Parse the input string for a natural language reference to a timezone and
+    return the corresponding tzinfo
+
+    Args:
+        input_str: The input string containing the natural language reference.
+
+    Returns:
+        A tzinfo object representing the parsed timezone string.
+
+    Raises:
+        ValueError: If the input string cannot be parsed.
+
+    """
+    if result := search_tz(input_str, fullmatch=True):
+        return result
+    raise ValueError("Invalid timezone string")
 
 
 def parse_datetime_str(input_str: str) -> datetime:
@@ -35,7 +58,7 @@ def parse_datetime_str(input_str: str) -> datetime:
         datetime.datetime(2022, 1, 1, 0, 0, tzinfo=zoneinfo.ZoneInfo(key='UTC'))
     """
     # scan for timezone
-    tzinfo = search_tz(input_str)
+    tzinfo_obj = search_tz(input_str)
 
     # Create a parsedatetime.Calendar instance
     cal = parsedatetime.Calendar(version=parsedatetime.VERSION_CONTEXT_STYLE)
@@ -44,7 +67,7 @@ def parse_datetime_str(input_str: str) -> datetime:
     # datetime object
     parsed_date, parse_status = cal.parseDT(
         input_str,
-        tzinfo=tzinfo,
+        tzinfo=tzinfo_obj,
         # sourceTime=datetime(1, 1, 1),
     )
 
@@ -132,9 +155,9 @@ def parse_timedelta_str(input_str: str) -> timedelta:
     )
 
 
-def parse_temporal_str(input_str: str) -> Union[datetime, timedelta]:
+def parse_temporal_str(input_str: str) -> TemporalObject:
     """
-    Parse a string as either a datetime or a timedelta.
+    Parse a string as a datetime, timedelta, or timezone
 
     Args:
         input_str: The input string to parse.
@@ -153,6 +176,11 @@ def parse_temporal_str(input_str: str) -> Union[datetime, timedelta]:
         >>> parse_temporal_str('tomorrow')
         datetime.datetime(...)
     """
+    try:
+        return parse_timezone_str(input_str)
+    except ValueError:
+        pass
+
     try:
         return parse_timedelta_str(input_str)
     except ValueError:
@@ -208,7 +236,28 @@ def is_timedelta(obj: Any) -> bool:
     return isinstance(obj, timedelta)
 
 
-def parse_temporal_expr(expression: str) -> Union[datetime, timedelta]:
+def is_timezone(obj: Any) -> bool:
+    """
+    Check if the given object is a timedelta.
+
+    Args:
+        obj: The object to be checked.
+
+    Returns:
+        True if the object is a timedelta, False otherwise.
+
+    Examples:
+        >>> from datetime import timezone
+        >>> is_timezone(timezone.utc)
+        True
+
+        >>> is_timezone(datetime.now())
+        False
+    """
+    return isinstance(obj, tzinfo)
+
+
+def parse_temporal_expr(expression: str) -> TemporalObject:
     """
     Parse a temporal expression and perform the corresponding operation.
 
@@ -252,7 +301,7 @@ def parse_temporal_expr(expression: str) -> Union[datetime, timedelta]:
         # fmt: off
         r"^\s*"
         r"(?P<a>.+?)"
-        r"\s+(?P<op>\+|\-|<|<=|>|>=|==|\!=)\s+"
+        r"\s+(?P<op>\+|\-|<|<=|>|>=|==|\!=|@)\s+"
         r"(?P<b>.+?)"
         r"\s*$"
         # fmt: on
@@ -277,6 +326,7 @@ def parse_temporal_expr(expression: str) -> Union[datetime, timedelta]:
         ">=": operator.ge,
         "==": operator.eq,
         "!=": operator.ne,
+        "@": lambda dt, tz: dt.astimezone(tz),
     }[op_string]
 
     logging.debug("%s %s %s", repr(a_term), repr(op_string), repr(b_term))
@@ -291,6 +341,9 @@ def parse_temporal_expr(expression: str) -> Union[datetime, timedelta]:
         # datetime cmp datetime == bool
         if op_string in ("-", "<", "<=", ">", ">=", "==", "!="):
             return op_func(a_term, b_term)
+    elif is_datetime(a_term) and is_timezone(b_term):
+        if op_string in ("@",):
+            return op_func(a_term, b_term)
     elif is_timedelta(a_term) and is_timedelta(b_term):
         return op_func(a_term, b_term)
 
@@ -298,3 +351,20 @@ def parse_temporal_expr(expression: str) -> Union[datetime, timedelta]:
         f"Unsupported operation: "
         f"{type(a_term).__name__} {op_string} {type(b_term).__name__}"
     )
+
+
+def format_temporal_object(obj: TemporalObject) -> str:
+    """
+    prints a string representation of the given object - this may or may not
+    use the object's built-in string representations
+    """
+    if is_datetime(obj):
+        assert isinstance(obj, datetime)  # nosec: for mypy's benefit
+        return str(obj)
+    if is_timedelta(obj):
+        assert isinstance(obj, timedelta)  # nosec: for mypy's benefit
+        return duration_to_string(obj)
+    if is_timezone(obj):
+        assert isinstance(obj, tzinfo)  # nosec: for mypy's benefit
+        return str(obj)
+    raise ValueError(f'no handler for object of type {type(obj)} with value "{obj}"')
