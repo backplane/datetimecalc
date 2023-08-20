@@ -1,3 +1,5 @@
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
 [project]
 name = "datetimecalc"
 version = "0.1.0"
@@ -18,6 +20,9 @@ Homepage = "https://github.com/backplane/datetimecalc"
 Repository = "https://github.com/backplane/datetimecalc.git"
 Changelog = "https://github.com/backplane/datetimecalc/releases"
 
+[project.scripts]
+pyimportgrep = "datetimecalc:__main__"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -29,3 +34,7 @@ optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 addopts = "--doctest-modules src"
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 pythonpath = "src/"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"

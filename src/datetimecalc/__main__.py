@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 
-from .functions import parse_temporal_expr
+from .functions import format_temporal_object, parse_temporal_expr
 
 
 def main() -> int:
@@ -38,7 +38,7 @@ def main() -> int:
     )
 
     for expr in args.temporal_expr:
-        print(parse_temporal_expr(expr))
+        print(format_temporal_object(parse_temporal_expr(expr)))
 
     return 0
 
