@@ -1,7 +1,8 @@
-""" utilities for working with timedeltas """
+"""utilities for working with timedeltas"""
+
 # pylint: disable=invalid-name
-import datetime
 import locale
+from datetime import timedelta
 from typing import Callable, Dict, Literal, Sequence, Tuple, TypeAlias, TypeVar, Union
 
 T = TypeVar("T", bound="TDC")
@@ -45,7 +46,7 @@ class TDC:
         "millisecond",
     )
 
-    def __init__(self, td: datetime.timedelta):
+    def __init__(self, td: timedelta):
         for k, v in self.extract_components(td).items():
             setattr(self, k, v)
 
@@ -54,7 +55,7 @@ class TDC:
         Allow index access to the namedtuple
 
         Usage:
-        >>> t = TDC(datetime.timedelta(days=365))
+        >>> t = TDC(timedelta(days=365))
         >>> t['year']
         1
         >>> t['z']
@@ -69,42 +70,78 @@ class TDC:
             raise KeyError(key) from None
 
     @staticmethod
-    def extract_components(td: Union[datetime.timedelta, int, float]) -> Dict[str, int]:
+    def extract_components(td: Union[timedelta, int, float]) -> Dict[str, int]:
         """
-        Extract time components from a timedelta, int or float. Converts int/float
-        values to timedelta. Extracts and returns components in a dictionary.
+        Extracts time components from a timedelta, int, or float.
 
         Args:
-            td: Timedelta, int seconds, or float seconds.
+            td: A timedelta object, or an int/float number of seconds.
 
         Returns:
-            dict: Time components including year, month, day, hour, minute, second,
-                millisecond and microsecond.
+            A dictionary with keys for years, months, weeks, days, hours,
+            minutes, seconds, milliseconds, and microseconds, and values
+            representing the number of each in the input timedelta.
+
 
         Examples:
-            >>> from datetime import timedelta
-            >>> TDC.extract_components(timedelta(days=2, seconds=3723))
-            {'year': 0, 'month': 0, 'week': 0, 'day': 2, 'hour': 1, \
-                'minute': 2, 'second': 3, 'millisecond': 0, 'microsecond': 0}
-            >>> TDC.extract_components(7200)
-            {'year': 0, 'month': 0, 'week': 0, 'day': 0, 'hour': 2, \
-                'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components = TDC.extract_components
+            >>> extract_components(timedelta(days=2, seconds=3723))
+            {'year': 0, 'month': 0, 'week': 0, 'day': 2, 'hour': 1,
+            'minute': 2, 'second': 3, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(7200)
+            {'year': 0, 'month': 0, 'week': 0, 'day': 0, 'hour': 2,
+            'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(timedelta(days=365))
+            {'year': 1, 'month': 0, 'week': 0, 'day': 0, 'hour': 0,
+            'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(timedelta(days=30))
+            {'year': 0, 'month': 1, 'week': 0, 'day': 0, 'hour': 0,
+            'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(timedelta(hours=48))
+            {'year': 0, 'month': 0, 'week': 0, 'day': 2, 'hour': 0,
+            'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(3600000)
+            {'year': 0, 'month': 1, 'week': 1, 'day': 4, 'hour': 16,
+            'minute': 0, 'second': 0, 'millisecond': 0, 'microsecond': 0}
+            >>> extract_components(timedelta(days=403, seconds=3661, \
+            microseconds=1001))
+            {'year': 1, 'month': 1, 'week': 1, 'day': 1, 'hour': 1,
+            'minute': 1, 'second': 1, 'millisecond': 1, 'microsecond': 1}
         """
 
         if isinstance(td, (int, float)):
-            td = datetime.timedelta(seconds=td)
+            td = timedelta(seconds=td)
 
-        return {
-            "year": td.days // 365,
-            "month": (td.days % 365) // 30,
-            "week": (td.days % 365) % 30 // 7,
-            "day": (td.days % 365) % 30 % 7,
-            "hour": td.seconds // 3600,
-            "minute": (td.seconds // 60) % 60,
-            "second": td.seconds % 60,
-            "millisecond": td.microseconds // 1000,
-            "microsecond": td.microseconds % 1000,
-        }
+        total_seconds = td.total_seconds()
+        sign = -1 if total_seconds < 0 else 1
+        total_seconds = abs(total_seconds)
+
+        # define the units and their respective lengths in seconds
+        units = (
+            ("year", 31_536_000),  # 60 * 60 * 24 * 365
+            ("month", 2_592_000),  # 60 * 60 * 24 * 30
+            ("week", 604_800),  # 60 * 60 * 24 * 7
+            ("day", 86_400),  # 60 * 60 * 24
+            ("hour", 3_600),  # 60 * 60
+            ("minute", 60),
+            ("second", 1),
+            ("millisecond", 1e-3),
+            ("microsecond", 1e-6),
+        )
+
+        components = {}
+
+        for unit, length_in_seconds in units:
+            # calculate the number of whole units
+            units_total = total_seconds // length_in_seconds
+
+            # add the number of units to the components dict
+            components[unit] = sign * int(units_total)
+
+            # subtract the units from the total seconds
+            total_seconds -= units_total * length_in_seconds
+
+        return components
 
     def labeled_values(self, labels: Dict[TDCKey, Tuple[str, str]]) -> Sequence[str]:
         """helper function for languages with a 2-element singular/plural tuple"""
@@ -115,7 +152,7 @@ class TDC:
         ]
 
 
-def duration_to_string_zh(td: datetime.timedelta) -> str:
+def duration_to_string_zh(td: timedelta) -> str:
     """
     Convert a timedelta to a Chinese string representation.
 
@@ -148,7 +185,7 @@ def duration_to_string_zh(td: datetime.timedelta) -> str:
     return "\uff0c ".join([f"{tdc[key]}{labels[key]}" for key in tdc.keys if tdc[key]])
 
 
-def duration_to_string_es(td: datetime.timedelta) -> str:
+def duration_to_string_es(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Spanish.
 
@@ -179,7 +216,7 @@ def duration_to_string_es(td: datetime.timedelta) -> str:
     return ", ".join(tdc.labeled_values(labels))
 
 
-def duration_to_string_en(td: datetime.timedelta) -> str:
+def duration_to_string_en(td: timedelta) -> str:
     """
     Convert a timedelta to an English string representation.
 
@@ -210,7 +247,7 @@ def duration_to_string_en(td: datetime.timedelta) -> str:
     return ", ".join(tdc.labeled_values(labels))
 
 
-def duration_to_string_hi(td: datetime.timedelta) -> str:
+def duration_to_string_hi(td: timedelta) -> str:
     """
     Convert a timedelta to a string representation in Hindi.
 
@@ -241,7 +278,7 @@ def duration_to_string_hi(td: datetime.timedelta) -> str:
     return ", ".join(tdc.labeled_values(labels))
 
 
-def duration_to_string_bn(td: datetime.timedelta) -> str:
+def duration_to_string_bn(td: timedelta) -> str:
     """
     Convert a timedelta to a string representation in Bengali.
 
@@ -272,7 +309,7 @@ def duration_to_string_bn(td: datetime.timedelta) -> str:
     return ", ".join(tdc.labeled_values(labels))
 
 
-def duration_to_string_pt(td: datetime.timedelta) -> str:
+def duration_to_string_pt(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Portuguese.
 
@@ -303,7 +340,7 @@ def duration_to_string_pt(td: datetime.timedelta) -> str:
     return ", ".join(tdc.labeled_values(labels))
 
 
-def duration_to_string_ja(td: datetime.timedelta) -> str:
+def duration_to_string_ja(td: timedelta) -> str:
     """Convert a timedelta object to a string in Japanese.
 
     Args:
@@ -333,7 +370,7 @@ def duration_to_string_ja(td: datetime.timedelta) -> str:
     return "、".join([f"{tdc[key]}{labels[key]}" for key in tdc.keys if tdc[key]])
 
 
-def duration_to_string_mr(td: datetime.timedelta) -> str:
+def duration_to_string_mr(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Marathi.
 
@@ -364,7 +401,7 @@ def duration_to_string_mr(td: datetime.timedelta) -> str:
     return ", ".join([f"{tdc[key]} {labels[key]}" for key in tdc.keys if tdc[key]])
 
 
-def duration_to_string_ru(td: datetime.timedelta) -> str:
+def duration_to_string_ru(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Russian.
 
@@ -406,7 +443,7 @@ def duration_to_string_ru(td: datetime.timedelta) -> str:
     )
 
 
-def duration_to_string_vi(td: datetime.timedelta) -> str:
+def duration_to_string_vi(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Vietnamese.
 
@@ -438,7 +475,7 @@ def duration_to_string_vi(td: datetime.timedelta) -> str:
     return ", ".join([f"{tdc[key]} {labels[key]}" for key in tdc.keys if tdc[key]])
 
 
-def duration_to_string_tr(td: datetime.timedelta) -> str:
+def duration_to_string_tr(td: timedelta) -> str:
     """
     Convert a timedelta object to a string in Turkish.
 
@@ -499,14 +536,14 @@ def locale_dict() -> Dict[str, str]:
     }
 
 
-def duration_to_string(td: datetime.timedelta, localize: bool = True) -> str:
+def duration_to_string(td: timedelta, localize: bool = True) -> str:
     """
-    return the given datetime.timedelta in a verbose, human-readable string format
+    return the given timedelta in a verbose, human-readable string format
     """
 
     # working my way down this list:
     # https://en.wikipedia.org/wiki/List_of_languages_by_number_of_native_speakers
-    handlers: Dict[str, Callable[[datetime.timedelta], str]] = {
+    handlers: Dict[str, Callable[[timedelta], str]] = {
         "zh": duration_to_string_zh,  # Chinese (zh) - 1.3 billion speakers
         "es": duration_to_string_es,  # Spanish (es) - 442 million speakers
         "en": duration_to_string_en,  # English (en) - 372 million speakers

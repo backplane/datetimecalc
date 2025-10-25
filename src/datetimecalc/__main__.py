@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" utility """
+"""utility"""
 import argparse
 import logging
 import sys
@@ -26,7 +26,13 @@ def main() -> int:
         help="enable debug output",
     )
     argp.add_argument(
-        "temporal_expr",
+        "--repr",
+        action="store_true",
+        help="use the python repr function on the object instead of "
+        "human-friendly formatting",
+    )
+    argp.add_argument(
+        "expr",
         nargs="+",
         help="a natural language date and time operation expression",
     )
@@ -37,8 +43,8 @@ def main() -> int:
         level=logging.DEBUG if args.debug else logging.WARNING,
     )
 
-    for expr in args.temporal_expr:
-        print(format_temporal_object(parse_temporal_expr(expr)))
+    obj = parse_temporal_expr(" ".join(args.expr))
+    print(repr(obj) if args.repr else format_temporal_object(obj))
 
     return 0
 

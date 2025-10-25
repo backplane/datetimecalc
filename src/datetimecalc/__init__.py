@@ -1,4 +1,4 @@
-""" datetimecalc module """
+"""datetimecalc module"""
 
 from .functions import (
     is_datetime,
