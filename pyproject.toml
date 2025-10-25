@@ -21,7 +21,7 @@ Repository = "https://github.com/backplane/datetimecalc.git"
 Changelog = "https://github.com/backplane/datetimecalc/releases"
 
 [project.scripts]
-pyimportgrep = "datetimecalc:__main__"
+datetimecalc = "datetimecalc:__main__"
 
 [tool.setuptools.packages.find]
 where = ["src"]
