@@ -1,6 +1,9 @@
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
 [project]
 name = "datetimecalc"
 version = "0.1.0"
+requires-python = ">=3.12"
 description = "calculator for datetimes and timedeltas"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
@@ -11,21 +14,36 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-dynamic = ["dependencies"]
+dependencies = [
+    "parsedatetime>=2.6",
+]
+#dynamic = ["dependencies"]
 
 [project.urls]
 Homepage = "https://github.com/backplane/datetimecalc"
 Repository = "https://github.com/backplane/datetimecalc.git"
 Changelog = "https://github.com/backplane/datetimecalc/releases"
 
+[project.scripts]
+datetimecalc = "datetimecalc:__main__.main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+#[tool.setuptools.dynamic]
+#dependencies = {file = ["requirements.txt"]}
+#optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules src"
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 pythonpath = "src/"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
