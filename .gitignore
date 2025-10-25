@@ -3,6 +3,7 @@
 .pytest_cache
 .venv
 .vscode
+CLAUDE.md
 __pycache__
 build
 cruft
