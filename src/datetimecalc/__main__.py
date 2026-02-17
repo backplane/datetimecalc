@@ -13,6 +13,7 @@ Usage:
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 
 from .functions import format_temporal_object, parse_temporal_expr
 
@@ -28,6 +29,11 @@ def main() -> int:
             "program which parses natural language datetime and timedelta expressions"
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    argp.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {version(__package__)}",
     )
     argp.add_argument(
         "--debug",
