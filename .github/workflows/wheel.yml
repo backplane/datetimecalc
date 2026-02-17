@@ -29,8 +29,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Build wheel
-        run: uv build --wheel --out-dir wheelhouse
+      - name: Build package
+        run: make build OUT_DIR=wheelhouse
 
       # https://github.com/actions/upload-artifact
       - uses: actions/upload-artifact@v6

@@ -3,6 +3,12 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
+name = "argparse-manpage"
+version = "4.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/6e/2907db04890c23728eecfcb04c37f66cba24d7903fe0ff6b8dc84d943ca5/argparse_manpage-4.7.tar.gz", hash = "sha256:1deab76b212ac8753cbb67b9d2d2bc0949bbc338bb1cc3547f0890cb34108b32", size = 58871, upload-time = "2025-08-15T10:24:20.601Z" }
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -21,6 +27,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "argparse-manpage" },
     { name = "pdoc3" },
     { name = "pytest" },
 ]
@@ -30,6 +37,7 @@ requires-dist = [{ name = "parsedatetime", specifier = ">=2.6" }]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "argparse-manpage", specifier = ">=4.7" },
     { name = "pdoc3", specifier = ">=0.11.1" },
     { name = "pytest", specifier = ">=8.4.2" },
 ]

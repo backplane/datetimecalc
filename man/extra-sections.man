@@ -1,29 +1,4 @@
-.TH DATETIMECALC "1" "2026\-02\-17" "datetimecalc" "Generated Python Manual"
-.SH NAME
-datetimecalc \- parse and compute with natural language datetime expressions
-.SH SYNOPSIS
-.B datetimecalc
-[-h] [--version] [--debug] [--repr] expr [expr ...]
-.SH DESCRIPTION
-program which parses natural language datetime and timedelta expressions
-
-.TP
-\fBexpr\fR
-a natural language date and time operation expression
-
-.SH OPTIONS
-.TP
-\fB\-\-version\fR
-show program's version number and exit
-
-.TP
-\fB\-\-debug\fR
-enable debug output
-
-.TP
-\fB\-\-repr\fR
-use the python repr function on the object instead of human\-friendly formatting
-.SH EXPRESSIONS
+[EXPRESSIONS]
 Expressions consist of temporal values (datetimes, timedeltas, or timezones)
 combined with operators.
 
@@ -79,7 +54,8 @@ IANA names: America/New_York, Europe/London, Asia/Tokyo
 Abbreviations: UTC, EST, PST (where unambiguous)
 .IP \(bu 2
 UTC offsets: +05:30, -08:00
-.SH EXAMPLES
+
+[EXAMPLES]
 .TP
 Add one week to a date:
 .B datetimecalc \(dq2024-01-01 + 1 week\(dq
@@ -98,39 +74,35 @@ Natural language with multiple arguments (no quotes needed):
 .TP
 Get Python repr output:
 .B datetimecalc \-\-repr \(dq2025-01-01 - 2024-01-01\(dq
-.SH OUTPUT
+
+[OUTPUT]
 By default, datetimes are formatted in ISO 8601 format and timedeltas
 are formatted in a human-readable localized form based on system locale.
 .PP
 With
 .BR \-\-repr ,
 output uses Python's repr() format (e.g., datetime.timedelta(days=7)).
-.SH LOCALIZATION
+
+[LOCALIZATION]
 Timedelta output is automatically localized based on the system locale.
 Supported languages: English, Spanish, Chinese, Hindi, Portuguese,
 Bengali, Russian, Japanese, Vietnamese, Turkish, Marathi.
-.SH EXIT STATUS
+
+[EXIT STATUS]
 .TP
 .B 0
 Success.
 .TP
 .B 1
 Error parsing expression or invalid input.
-.SH SEE ALSO
+
+[SEE ALSO]
 .BR date (1),
 .BR python3 (1)
-.SH BUGS
+
+[BUGS]
 Only single binary operations are supported. Chained expressions like
 "a + b + c" do not work; use separate invocations or parentheses in a shell.
-.SH COPYRIGHT
+
+[COPYRIGHT]
 Copyright \(co 2024-2026 Backplane. Licensed under the Apache License 2.0.
-
-.SH AUTHOR
-.nf
-Backplane <actualben@users.noreply.github.com>
-.fi
-
-.SH DISTRIBUTION
-The latest version of datetimecalc may be downloaded from
-.UR https://github.com/backplane/datetimecalc
-.UE
