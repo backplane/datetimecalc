@@ -15,7 +15,7 @@ jobs:
     steps:
       # https://github.com/actions/checkout
       - name: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Version check
         run: |
@@ -28,9 +28,6 @@ jobs:
       # https://github.com/actions/setup-python
       - name: Set up Python
         uses: actions/setup-python@v6
-        # with:
-        #   python-version: "3.11"
-        #   cache: "pip" # caching pip dependencies
 
       # # https://github.com/pypa/cibuildwheel
       # - name: cibuildwheel
@@ -50,7 +47,7 @@ jobs:
           pip wheel -w wheelhouse .
 
       # https://github.com/actions/upload-artifact
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           retention-days: 30
           path: ./wheelhouse/*.whl

@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""utility"""
+"""
+Command-line interface for datetimecalc.
+
+Usage:
+    datetimecalc "2024-01-01 + 1 week"
+    datetimecalc "tomorrow - 2 hours"
+    datetimecalc "2025-01-01 - 2024-01-01"
+    datetimecalc --repr "1 day + 12 hours"
+    datetimecalc --debug "now @ UTC"
+"""
+
 import argparse
 import logging
 import sys
@@ -15,8 +25,7 @@ def main() -> int:
     argp = argparse.ArgumentParser(
         prog=__package__,
         description=(
-            "program which parses natural language datetime and timedelta "
-            "expressions"
+            "program which parses natural language datetime and timedelta expressions"
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
