@@ -11,5 +11,6 @@ build
 cruft
 dist
 docs
+man/*.1
 src/*.egg-info
 venv
