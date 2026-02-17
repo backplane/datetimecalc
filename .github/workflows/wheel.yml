@@ -30,7 +30,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Build package
-        run: make build OUT_DIR=wheelhouse
+        run: make wheel OUT_DIR=wheelhouse
 
       # https://github.com/actions/upload-artifact
       - uses: actions/upload-artifact@v6

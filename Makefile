@@ -1,15 +1,28 @@
-.PHONY: all build clean manpage test
-
 OUT_DIR ?= dist
 
-all: build
+.PHONY: all
+all: wheel
 
-build: manpage
+.PHONY: test
+test:
+	@echo "==> $@"
+	uv run pytest
+
+.PHONY: clean
+clean:
+	@echo "==> $@"
+	rm -rf dist/ build/ *.egg-info man/datetimecalc.1
+
+.PHONY: wheel
+wheel: manpages
+	@echo "==> $@"
 	uv build --wheel --out-dir $(OUT_DIR)
 
-manpage: man/datetimecalc.1
+.PHONY: manpages
+manpages: man/datetimecalc.1
 
-man/datetimecalc.1: src/datetimecalc/__main__.py man/extra-sections.man
+man/datetimecalc.1: man/extra-sections.man src/datetimecalc/__main__.py
+	@echo "==> $@"
 	uv run argparse-manpage \
 		--module datetimecalc.__main__ \
 		--function get_parser \
@@ -17,11 +30,5 @@ man/datetimecalc.1: src/datetimecalc/__main__.py man/extra-sections.man
 		--description "parse and compute with natural language datetime expressions" \
 		--author "Backplane <actualben@users.noreply.github.com>" \
 		--url "https://github.com/backplane/datetimecalc" \
-		--include man/extra-sections.man \
-		--output man/datetimecalc.1
-
-test:
-	uv run pytest
-
-clean:
-	rm -rf dist/ build/ *.egg-info
+		--include "$<" \
+		--output "$@"
