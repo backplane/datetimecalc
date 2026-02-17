@@ -202,8 +202,7 @@ datetimecalc/
 
 ## Documentation
 
-- [API Documentation](https://backplane.github.io/datetimecalc/) - Full API reference
-- [Development Guide](CLAUDE.md) - Contributing and architecture
+- [API Documentation](https://www.backplane.be/datetimecalc/) - Full API reference
 
 ## Contributing
 
