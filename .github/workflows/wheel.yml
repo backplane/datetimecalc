@@ -25,26 +25,12 @@ jobs:
           TAG="${GITHUB_REF##refs/tags/v}"  # e.g. 1.0.0
           grep -qE "^version = \"$TAG\"$" pyproject.toml
 
-      # https://github.com/actions/setup-python
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      # https://github.com/astral-sh/setup-uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      # # https://github.com/pypa/cibuildwheel
-      # - name: cibuildwheel
-      #   # to supply cibuildwheel options, put them in 'env', like:
-      #   # env:
-      #   #   CIBW_SOME_OPTION: value
-      #   run: |
-      #     #!/bin/sh
-      #     set -eux
-      #     pip install cibuildwheel
-      #     python -m cibuildwheel --output-dir wheelhouse
-
-      - name: pip wheel
-        run: |
-          #!/bin/sh
-          set -eux
-          pip wheel -w wheelhouse .
+      - name: Build wheel
+        run: uv build --wheel --out-dir wheelhouse
 
       # https://github.com/actions/upload-artifact
       - uses: actions/upload-artifact@v6
