@@ -1,5 +1,3 @@
-# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
-
 [project]
 name = "datetimecalc"
 version = "0.1.0"
@@ -10,9 +8,17 @@ license = {file = "LICENSE.txt"}
 authors = [
   {name = "Backplane", email = "actualben@users.noreply.github.com"},
 ]
+keywords = ["datetime", "timedelta", "date", "time", "calculator", "natural-language"]
 classifiers = [
   "Development Status :: 4 - Beta",
-  "Programming Language :: Python"
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
 ]
 dependencies = [
     "parsedatetime>=2.6",
@@ -20,15 +26,12 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/backplane/datetimecalc"
-Documentation = "https://backplane.github.io/datetimecalc/"
+Documentation = "https://www.backplane.be/datetimecalc/"
 Repository = "https://github.com/backplane/datetimecalc.git"
 Changelog = "https://github.com/backplane/datetimecalc/releases"
 
 [project.scripts]
 datetimecalc = "datetimecalc:__main__.main"
-
-[tool.setuptools.packages.find]
-where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules src"
@@ -36,8 +39,8 @@ doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 pythonpath = "src/"
 
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.5.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
