@@ -5,29 +5,42 @@ A Python library and command-line tool for parsing and computing with natural la
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/backplane/datetimecalc)](LICENSE.txt)
 
+## Quick Start
+
+```bash
+# Install with uv (recommended)
+uv pip install git+https://github.com/backplane/datetimecalc.git
+
+# Or clone and run directly
+git clone https://github.com/backplane/datetimecalc.git
+cd datetimecalc
+uv run datetimecalc "tomorrow + 2 hours"
+```
+
+```bash
+# Example commands
+datetimecalc "2024-01-01 + 1 week"
+datetimecalc "now - 30 days"
+datetimecalc "2025-01-01 - 2024-01-01"      # Output: 1 year
+datetimecalc "2024-01-01 EST @ UTC"          # Timezone conversion
+datetimecalc "1 day == 24 hours"             # Output: True
+```
+
 ## Features
 
-- **Natural language datetime parsing** - Parse expressions like "tomorrow at 3pm" or "next Friday"
-- **Flexible timedelta syntax** - Support for "1 day", "2h 30m", "1.5 hours", etc.
-- **Timezone support** - Handles IANA timezones, UTC offsets, and timezone conversions
-- **Arithmetic operations** - Add/subtract dates and durations with intuitive syntax
-- **Comparison operators** - Compare dates, times, and timedeltas
-- **Internationalization** - Output formatting in 11 languages
+- **Natural language parsing** - "tomorrow at 3pm", "next Friday", "in 2 hours"
+- **Flexible duration syntax** - "1 day", "2h 30m", "1.5 hours", "90 minutes"
+- **Timezone support** - IANA timezones, UTC offsets, and conversions with `@`
+- **Date arithmetic** - Add, subtract, and compare dates and durations
+- **Localized output** - Formats durations in 11 languages based on system locale
 - **Python repr() support** - Parse and output Python datetime repr strings
-- **Modern tooling** - Built with uv package manager for fast, reliable dependency management
 
 ## Installation
 
 ### With uv (recommended)
 
 ```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone and install
-git clone https://github.com/backplane/datetimecalc.git
-cd datetimecalc
-uv sync
+uv pip install git+https://github.com/backplane/datetimecalc.git
 ```
 
 ### With pip
@@ -36,210 +49,140 @@ uv sync
 pip install git+https://github.com/backplane/datetimecalc.git
 ```
 
-### Requirements
+### From source
 
-- Python 3.12 or higher
-- parsedatetime >= 2.6
+```bash
+git clone https://github.com/backplane/datetimecalc.git
+cd datetimecalc
+uv sync
+```
+
+**Requirements:** Python 3.12+
 
 ## Usage
 
-### As a Library
+### Command Line
+
+```bash
+# Date arithmetic
+datetimecalc "2024-01-01 + 1 day"
+datetimecalc "tomorrow - 2 hours"
+datetimecalc "now + 1 week"
+
+# Date differences
+datetimecalc "2025-01-01 - 2024-01-01"
+# Output: 1 year
+
+# Timezone conversion
+datetimecalc "2024-01-01 12:00 America/New_York @ UTC"
+# Output: 2024-01-01 17:00:00+00:00
+
+# Comparisons
+datetimecalc "1 day == 24 hours"    # True
+datetimecalc "2024-01-01 < now"     # True/False depending on current date
+
+# Debug mode
+datetimecalc --debug "2024-01-01 + 1 week"
+
+# Python repr output
+datetimecalc --repr "2025-01-01 - 2024-01-01"
+# Output: datetime.timedelta(days=365)
+
+# Multi-word expressions (no quotes needed)
+datetimecalc tomorrow at 3pm + 2 hours
+```
+
+### Python Library
 
 ```python
 from datetimecalc.functions import parse_temporal_expr
 
-# Addition of a date and a time duration
-result = parse_temporal_expr('2022-01-01 12:00 UTC + 1 day')
-print(result)
-# Output: 2022-01-02 12:00:00+00:00
+# Date + duration
+parse_temporal_expr('2022-01-01 12:00 UTC + 1 day')
+# datetime(2022, 1, 2, 12, 0, tzinfo=timezone.utc)
 
-# Subtraction of a week duration from a date
-result = parse_temporal_expr('2022-01-01 00:00 - 1 week')
-print(result)
-# Output: 2021-12-25 00:00:00
+# Date - duration
+parse_temporal_expr('2022-01-01 - 1 week')
+# datetime(2021, 12, 25, 0, 0)
 
-# Comparing two dates
-result = parse_temporal_expr('2022-01-01 UTC < 2023-01-01 UTC')
-print(result)
-# Output: True
+# Date - date (returns timedelta)
+parse_temporal_expr('2025-01-01 - 2024-01-01')
+# timedelta(days=365)
 
-# Checking equality of two time durations
-result = parse_temporal_expr('1 day == 24 hours')
-print(result)
-# Output: True
+# Timezone conversion
+parse_temporal_expr('2024-01-01 12:00 America/New_York @ UTC')
+# datetime(2024, 1, 1, 17, 0, tzinfo=timezone.utc)
 
-# Subtracting two dates
-result = parse_temporal_expr('2025-01-02 - 2023-01-01')
-print(result)
-# Output: 2 years, 1 day
-
-# Timezone conversion with @ operator
-result = parse_temporal_expr('2024-01-01 12:00 America/New_York @ UTC')
-print(result)
-# Output: 2024-01-01 17:00:00+00:00
-
-# UTC offset timezone parsing
-result = parse_temporal_expr('2024-01-01 +05:30')
-print(result)
-# Output: 2024-01-01 00:00:00+05:30
-
-# Compare timezones by offset
-result = parse_temporal_expr('America/New_York == EST')
-print(result)
-# Output: True
+# Comparisons
+parse_temporal_expr('2024-01-01 < 2025-01-01')  # True
+parse_temporal_expr('1 day == 24 hours')        # True
 ```
 
-### As a Command-Line Tool
+## Operations Reference
 
-```bash
-# Basic usage
-datetimecalc "tomorrow + 2 hours"
+| Operation           | Syntax                           | Example                   |
+| ------------------- | -------------------------------- | ------------------------- |
+| Add duration        | `datetime + timedelta`           | `2024-01-01 + 1 day`      |
+| Subtract duration   | `datetime - timedelta`           | `tomorrow - 2 hours`      |
+| Date difference     | `datetime - datetime`            | `2025-01-01 - 2024-01-01` |
+| Convert timezone    | `datetime @ timezone`            | `2024-01-01 EST @ UTC`    |
+| Duration arithmetic | `timedelta +/- timedelta`        | `1 day + 12 hours`        |
+| Comparisons         | `<`, `<=`, `>`, `>=`, `==`, `!=` | `1 day == 24 hours`       |
 
-# With debug output
-datetimecalc --debug "2024-01-01 + 1 week"
+## Duration Units
 
-# Output Python repr() format
-datetimecalc --repr "2025-01-01 - 2024-01-01"
-# Output: datetime.timedelta(days=365)
+| Unit         | Formats                                 |
+| ------------ | --------------------------------------- |
+| Years        | `1 year`, `2 years`, `3y`               |
+| Months       | `1 month`, `2 months`, `3mo`            |
+| Weeks        | `1 week`, `2 weeks`, `3w`               |
+| Days         | `1 day`, `2 days`, `3d`                 |
+| Hours        | `1 hour`, `2 hours`, `3h`, `1.5 hours`  |
+| Minutes      | `1 minute`, `2 minutes`, `3m`, `30 min` |
+| Seconds      | `1 second`, `2 seconds`, `3s`           |
+| Milliseconds | `500ms`, `1 millisecond`                |
+| Microseconds | `500us`, `1 microsecond`                |
 
-# Multi-word expressions
-datetimecalc tomorrow at 3pm + 2 hours
+**Note:** Years and months use fixed approximations (1 year = 365 days, 1 month = 30 days).
 
-# Timezone operations
-datetimecalc "2024-01-01 America/New_York @ UTC"
+## Localization
 
-# Compare dates
-datetimecalc "2024-01-01 < 2025-01-01"
-```
-
-### Using with uv
-
-```bash
-# Run without installing
-uv run datetimecalc "tomorrow + 1 day"
-
-# Run tests
-uv run pytest
-
-# Run pre-commit hooks
-uv run pre-commit run --all-files
-```
-
-## Supported Operations
-
-| Operation            | Syntax                           | Example                   |
-| -------------------- | -------------------------------- | ------------------------- |
-| Addition             | `datetime + timedelta`           | `2024-01-01 + 1 day`      |
-| Subtraction          | `datetime - timedelta`           | `tomorrow - 2 hours`      |
-| Date difference      | `datetime - datetime`            | `2025-01-01 - 2024-01-01` |
-| Timezone conversion  | `datetime @ timezone`            | `2024-01-01 EST @ UTC`    |
-| Comparison           | `<`, `<=`, `>`, `>=`, `==`, `!=` | `1 day == 24 hours`       |
-| Timedelta arithmetic | `timedelta +/- timedelta`        | `1 day + 12 hours`        |
-
-## Supported Time Units
-
-Timedeltas support various formats:
-
-- **Years**: `1 year`, `2 years`, `3y`
-- **Months**: `1 month`, `2 months`, `3mo`
-- **Weeks**: `1 week`, `2 weeks`, `3w`
-- **Days**: `1 day`, `2 days`, `3d`
-- **Hours**: `1 hour`, `2 hours`, `3h`, `1.5 hours`
-- **Minutes**: `1 minute`, `2 minutes`, `3m`, `30 min`
-- **Seconds**: `1 second`, `2 seconds`, `3s`
-- **Milliseconds**: `500ms`, `1 millisecond`
-- **Microseconds**: `500us`, `1 microsecond`
-
-## Internationalization
-
-Output is automatically localized based on system locale. Supported languages:
-
-- English (en)
-- Spanish (es)
-- Chinese (zh)
-- Hindi (hi)
-- Portuguese (pt)
-- Bengali (bn)
-- Russian (ru)
-- Japanese (ja)
-- Vietnamese (vi)
-- Turkish (tr)
-- Marathi (mr)
+Duration output automatically adapts to system locale:
 
 ```python
 from datetimecalc.timedelta import duration_to_string
 from datetime import timedelta
 
-# Automatically uses system locale
-print(duration_to_string(timedelta(days=2, hours=3)))
+duration_to_string(timedelta(days=2, hours=3))
 # English: "2 days, 3 hours"
 # Spanish: "2 días, 3 horas"
 # Japanese: "2日、3時間"
 ```
 
+**Supported languages:** English, Spanish, Chinese, Hindi, Portuguese, Bengali, Russian, Japanese, Vietnamese, Turkish, Marathi
+
 ## Development
 
-### Setup Development Environment
-
 ```bash
-# Clone the repository
+# Setup
 git clone https://github.com/backplane/datetimecalc.git
 cd datetimecalc
-
-# Install uv if needed
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Sync dependencies (creates .venv automatically)
 uv sync
-
-# Install pre-commit hooks
 uv run pre-commit install
-```
 
-### Running Tests
-
-```bash
-# Run all tests (includes doctests)
+# Run tests
 uv run pytest
+uv run pytest -v                    # verbose
+uv run pytest --doctest-modules src # doctests only
 
-# Run with verbose output
-uv run pytest -v
+# Code quality
+uv run pre-commit run --all-files   # all checks
+uv run black src/                   # format
+uv run mypy src/                    # type check
 
-# Run specific test
-uv run pytest src/datetimecalc/functions.py::parse_temporal_expr
-
-# Run only doctests
-uv run pytest --doctest-modules src
-```
-
-### Code Quality
-
-```bash
-# Format code
-uv run black src/
-
-# Sort imports
-uv run isort --profile black src/
-
-# Type checking
-uv run mypy src/
-
-# Linting
-uv run flake8 src/
-uv run pylint src/
-
-# Run all pre-commit hooks
-uv run pre-commit run --all-files
-```
-
-### Building
-
-```bash
-# Build wheel
-uv build
-
-# Build standalone executable with PyOxidizer
-pyoxidizer build
+# Build
+uv build                            # wheel
+pyoxidizer build                    # standalone executable
 ```
 
 ## Project Structure
@@ -247,45 +190,35 @@ pyoxidizer build
 ```
 datetimecalc/
 ├── src/datetimecalc/
-│   ├── __init__.py          # Public API exports
-│   ├── __main__.py          # CLI entry point
-│   ├── functions.py         # Core parsing and expression evaluation
-│   ├── timedelta.py         # Human-readable timedelta formatting (i18n)
-│   └── tz.py                # Timezone detection and parsing
-├── docs/                    # API documentation
-├── pyproject.toml           # Project configuration
-├── uv.lock                  # Dependency lockfile
-├── CLAUDE.md                # Guide for Claude Code
-└── README.md                # This file
+│   ├── __init__.py      # Public API exports
+│   ├── __main__.py      # CLI entry point
+│   ├── functions.py     # Core parsing and expression evaluation
+│   ├── timedelta.py     # Human-readable timedelta formatting (i18n)
+│   └── tz.py            # Timezone detection and parsing
+├── pyproject.toml       # Project configuration
+├── uv.lock              # Dependency lockfile
+└── README.md
 ```
 
 ## Documentation
 
-- [API Documentation](docs/index.md)
-- [Functions Module](docs/functions.md)
-- [Timezone Module](docs/tz.md)
-- [Development Guide](CLAUDE.md) - For contributors and Claude Code instances
-
-## License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE.txt](LICENSE.txt) file for details.
+- [API Documentation](https://backplane.github.io/datetimecalc/) - Full API reference
+- [Development Guide](CLAUDE.md) - Contributing and architecture
 
 ## Contributing
 
-Contributions are welcome! Please ensure:
+1. All tests pass: `uv run pytest`
+2. Code is formatted: `uv run black src/`
+3. Pre-commit hooks pass: `uv run pre-commit run --all-files`
+4. Type hints included for new functions
+5. Doctests included for new functionality
 
-1. All tests pass (`uv run pytest`)
-2. Code is formatted (`uv run black src/`)
-3. Pre-commit hooks pass (`uv run pre-commit run --all-files`)
-4. Type hints are added for new functions
-5. Doctests are included for new functionality
+## License
+
+Apache License 2.0 - see [LICENSE.txt](LICENSE.txt)
 
 ## Acknowledgments
 
-- Built with [parsedatetime](https://github.com/bear/parsedatetime) for natural language date parsing
-- Package management by [uv](https://github.com/astral-sh/uv)
-- Timezone data from Python's [zoneinfo](https://docs.python.org/3/library/zoneinfo.html)
-
-## Status
-
-This project is under active development. See the [releases page](https://github.com/backplane/datetimecalc/releases) for changelog and version history.
+- [parsedatetime](https://github.com/bear/parsedatetime) - Natural language date parsing
+- [uv](https://github.com/astral-sh/uv) - Package management
+- [zoneinfo](https://docs.python.org/3/library/zoneinfo.html) - Timezone data

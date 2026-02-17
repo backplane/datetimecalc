@@ -1,5 +1,19 @@
 """functions for working with simple temporal expressions"""
 
+__all__ = [
+    "parse_temporal_expr",
+    "parse_datetime_str",
+    "parse_timedelta_str",
+    "parse_timezone_str",
+    "parse_temporal_str",
+    "parse_repr_str",
+    "format_temporal_object",
+    "is_datetime",
+    "is_timedelta",
+    "is_timezone",
+    "spliton",
+]
+
 import logging
 import operator
 import re
@@ -14,6 +28,7 @@ from typing import (
     Sequence,
     Tuple,
     TypeAlias,
+    TypeVar,
     Union,
 )
 
@@ -24,14 +39,65 @@ from .tz import search_tz
 
 TemporalObject: TypeAlias = Union[datetime, timedelta, tzinfo]
 
+# TypeVar for spliton to preserve element type
+_T = TypeVar("_T")
 
-def spliton(seq: Sequence[Any], **kwargs) -> Tuple[Sequence[Any], Sequence[Any]]:
+# Pre-compiled regex patterns for performance
+_TIMEDELTA_PATTERN: Final[re.Pattern[str]] = re.compile(
+    # fmt: off
+    r"^\s*"
+    r"(\s*\b"
+    r"("
+    r"(?P<years>\d+(\.\d+)?)\s*y(ears?)?|"
+    r"(?P<months>\d+(\.\d+)?)\s*mo(n(ths?)?)?|"
+    r"(?P<weeks>\d+(\.\d+)?)\s*w((eek|k)s?)?|"
+    r"(?P<days>\d+(\.\d+)?)\s*d(ays?)?|"
+    r"(?P<hours>\d+(\.\d+)?)\s*h(rs?|ours?)?|"
+    r"(?P<minutes>\d+(\.\d+)?)\s*m(in(ute)?s?)?|"
+    r"(?P<seconds>\d+(\.\d+)?)\s*s(ec(ond)?s?)?|"
+    r"(?P<microseconds>\d+(\.\d+)?)\s*(μs|us|microsec(ond)?s?)|"
+    r"(?P<milliseconds>\d+(\.\d+)?)\s*(ms|msec|millisec(ond)?s?)"
+    r")"
+    r"[\s,]*\b)+"
+    r"\s*$"
+    # fmt: on
+)
+
+_DATETIME_REPR_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"\s*"
+    r"datetime\.(?P<class>datetime|timedelta)\("
+    r"(?P<arglist>"
+    r"(?:"
+    r"(?:(?:days|(?:micro)?seconds)=)?(?:\d+)(?:,\s)?)+"
+    r"(?:tzinfo=.+?)?"
+    r")"
+    r"\)"
+    r"\s*"
+)
+
+_ZONEINFO_REPR_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"zoneinfo.ZoneInfo\(key='(?P<key>.+?)'\)"
+)
+
+
+_TEMPORAL_EXPR_PATTERN: Final[re.Pattern[str]] = re.compile(
+    # fmt: off
+    r"^\s*"
+    r"(?P<a>.+?)"
+    r"\s+(?P<op>\+|\-|<|<=|>|>=|==|\!=|@)\s+"
+    r"(?P<b>.+?)"
+    r"\s*$"
+    # fmt: on
+)
+
+
+def spliton(seq: Sequence[_T], **kwargs) -> Tuple[Sequence[_T], Sequence[_T]]:
     """
     Splits a sequence into two sequences based on the first item matching a
-    condition.
+    condition. The return type matches the input type.
 
     Args:
-        seq (Sequence): The sequence to be split.
+        seq: The sequence to be split (list, tuple, str, etc.).
         **kwargs: A single keyword argument specifying the predicate and the
           comparison value. The keyword must be one of the following strings:
           'lt', 'le', 'eq', 'ne', 'ge', 'gt', 'is_', 'is_not', 'contains',
@@ -39,10 +105,9 @@ def spliton(seq: Sequence[Any], **kwargs) -> Tuple[Sequence[Any], Sequence[Any]]
           The value is the second term in the binary predicate operation.
 
     Returns:
-        Tuple[Sequence, Sequence]: A tuple of two sequences: the first contains
-          items up to the first item matching the condition, the second
-          contains the first item matching the condition and all items after
-          it.
+        A tuple of two sequences of the same type as the input: the first
+        contains items up to the first item matching the condition, the second
+        contains the first item matching the condition and all items after it.
 
     Raises:
         TypeError: If the number of keyword arguments is not 1, or if the predicate
@@ -88,7 +153,7 @@ def spliton(seq: Sequence[Any], **kwargs) -> Tuple[Sequence[Any], Sequence[Any]]
 
     # return the whole sequence and an empty sequence if no item matches the
     # condition
-    return (seq, type(seq)())
+    return seq, type(seq)()
 
 
 def parse_timezone_str(input_str: str) -> tzinfo:
@@ -170,18 +235,33 @@ def parse_datetime_str(input_str: str) -> datetime:
 
 def parse_timedelta_str(input_str: str) -> timedelta:
     """
-    Parses a string containing time delta information and returns a timedelta object
+    Parses a string containing time delta information and returns a timedelta object.
 
     Args:
-        input_string: A string containing the time delta information.
+        input_str: A string containing the time delta information.
 
     Returns:
         A timedelta object representing the parsed time delta.
 
     Raises:
-        ValueError: If the input_string is not a valid time delta string.
+        ValueError: If the input_str is not a valid time delta string.
+
+    Note:
+        Years and months use fixed approximations, not calendar-accurate values:
+
+        - 1 year = 365 days (ignores leap years)
+        - 1 month = 30 days (ignores actual month lengths)
+
+        This means "1 year" always equals exactly 365 days, regardless of
+        whether it spans a leap year. Similarly, "1 month" is always 30 days,
+        not the actual number of days in any particular month.
+
+        For calendar-accurate arithmetic (e.g., "add 1 month" meaning the same
+        day next month), use ``dateutil.relativedelta`` instead.
 
     Examples:
+        Basic usage:
+
         >>> parse_timedelta_str('1d')
         datetime.timedelta(days=1)
         >>> parse_timedelta_str('1 day')
@@ -192,29 +272,26 @@ def parse_timedelta_str(input_str: str) -> timedelta:
         datetime.timedelta(seconds=5400)
         >>> parse_timedelta_str('500ms')
         datetime.timedelta(microseconds=500000)
+
+        Combining multiple units:
+
         >>> parse_timedelta_str('1 day 6.5 hours, 10 min 33s 3 year')
         datetime.timedelta(days=1096, seconds=24033)
+
+        Year and month approximations:
+
+        >>> parse_timedelta_str('1 year')
+        datetime.timedelta(days=365)
+        >>> parse_timedelta_str('1 month')
+        datetime.timedelta(days=30)
+        >>> parse_timedelta_str('12 months')  # Not exactly 1 year!
+        datetime.timedelta(days=360)
+        >>> parse_timedelta_str('1 year') == parse_timedelta_str('365 days')
+        True
+        >>> parse_timedelta_str('1 year') == parse_timedelta_str('12 months')
+        False
     """
-    pattern = re.compile(
-        # fmt: off
-        r"^\s*"
-        r"(\s*\b"
-        r"("
-        r"(?P<years>\d+(\.\d+)?)\s*y(ears?)?|"
-        r"(?P<months>\d+(\.\d+)?)\s*mo(n(ths?)?)?|"
-        r"(?P<weeks>\d+(\.\d+)?)\s*w((eek|k)s?)?|"
-        r"(?P<days>\d+(\.\d+)?)\s*d(ays?)?|"
-        r"(?P<hours>\d+(\.\d+)?)\s*h(rs?|ours?)?|"
-        r"(?P<minutes>\d+(\.\d+)?)\s*m(in(ute)?s?)?|"
-        r"(?P<seconds>\d+(\.\d+)?)\s*s(ec(ond)?s?)?|"
-        r"(?P<microseconds>\d+(\.\d+)?)\s*(μs|us|microsec(ond)?s?)|"
-        r"(?P<milliseconds>\d+(\.\d+)?)\s*(ms|msec|millisec(ond)?s?)"
-        r")"
-        r"[\s,]*\b)+"
-        r"\s*$"
-        # fmt: on
-    )
-    match = pattern.match(input_str)
+    match = _TIMEDELTA_PATTERN.match(input_str)
     if not match:
         raise ValueError("Invalid time delta string")
     parsed = match.groupdict()
@@ -268,21 +345,7 @@ def parse_repr_str(repr_str: str) -> TemporalObject:
         "microseconds=500000)")
         datetime.timedelta(days=2, seconds=3600, microseconds=500000)
     """
-    # Regular expressions to match repr strings
-    datetime_repr = re.compile(
-        r"\s*"
-        r"datetime\.(?P<class>datetime|timedelta)\("
-        r"(?P<arglist>"
-        r"(?:"
-        r"(?:(?:days|(?:micro)?seconds)=)?(?:\d+)(?:,\s)?)+"
-        r"(?:tzinfo=.+?)?"
-        r")"
-        r"\)"
-        r"\s*"
-    )
-    zoneinfo_repr = re.compile(r"zoneinfo.ZoneInfo\(key='(?P<key>.+?)'\)")
-
-    match = datetime_repr.fullmatch(repr_str)
+    match = _DATETIME_REPR_PATTERN.fullmatch(repr_str)
     if not match:
         raise ValueError("not a valid datetime repr")
 
@@ -302,7 +365,7 @@ def parse_repr_str(repr_str: str) -> TemporalObject:
                 raise ValueError(f"can't parse kwarg int datetime repr: {kwarg}")
             if valstr == "datetime.timezone.utc":
                 tz_arg = timezone.utc
-            if match := zoneinfo_repr.match(valstr):
+            elif match := _ZONEINFO_REPR_PATTERN.match(valstr):
                 tz_arg = parse_timezone_str(match.group("key"))
         # https://github.com/python/mypy/issues/10348
         return datetime(*[int(arg) for arg in args[:7]], tzinfo=tz_arg)  # type: ignore
@@ -459,17 +522,7 @@ def parse_temporal_expr(expression: str) -> TemporalObject:
             ...
         ValueError: Unsupported operation: datetime + datetime
     """
-    time_op = re.compile(
-        # fmt: off
-        r"^\s*"
-        r"(?P<a>.+?)"
-        r"\s+(?P<op>\+|\-|<|<=|>|>=|==|\!=|@)\s+"
-        r"(?P<b>.+?)"
-        r"\s*$"
-        # fmt: on
-    )
-
-    match = time_op.match(expression)
+    match = _TEMPORAL_EXPR_PATTERN.match(expression)
     if not match:
         logging.debug("no match on time_op, trying as temporal_str")
         try:
@@ -494,34 +547,35 @@ def parse_temporal_expr(expression: str) -> TemporalObject:
 
     logging.debug("%s %s %s", repr(a_term), repr(op_string), repr(b_term))
 
-    if is_datetime(a_term) and is_timedelta(b_term):
+    match (a_term, op_string, b_term):
         # datetime +/- timedelta == datetime
-        if op_string in ("+", "-"):
+        case (datetime(), "+" | "-", timedelta()):
             return op_func(a_term, b_term)
-    elif is_datetime(a_term) and is_datetime(b_term):
+
         # datetime - datetime == timedelta
-        # ...and...
         # datetime cmp datetime == bool
-        if op_string in ("-", "<", "<=", ">", ">=", "==", "!="):
+        case (datetime(), "-" | "<" | "<=" | ">" | ">=" | "==" | "!=", datetime()):
             return op_func(a_term, b_term)
-    elif is_datetime(a_term) and is_timezone(b_term):
-        if op_string in ("@",):
+
+        # datetime @ timezone == datetime (timezone conversion)
+        case (datetime(), "@", tzinfo()):
             return op_func(a_term, b_term)
-    elif is_timedelta(a_term) and is_timedelta(b_term):
-        return op_func(a_term, b_term)
-    elif is_timezone(a_term) and is_timezone(b_term):
-        if op_string in ("-", "<", "<=", ">", ">=", "==", "!="):
-            if not (isinstance(a_term, tzinfo) and isinstance(b_term, tzinfo)):
-                raise ValueError(
-                    "can't compare timezones unless both operands are tzinfo instances"
-                )
-            now = datetime.utcnow()
+
+        # timedelta +/- timedelta == timedelta
+        # timedelta cmp timedelta == bool
+        case (timedelta(), _, timedelta()):
+            return op_func(a_term, b_term)
+
+        # timezone cmp timezone == bool (compare by UTC offset)
+        case (tzinfo(), "-" | "<" | "<=" | ">" | ">=" | "==" | "!=", tzinfo()):
+            now = datetime.now(timezone.utc)
             return op_func(a_term.utcoffset(now), b_term.utcoffset(now))
 
-    raise ValueError(
-        f"Unsupported operation: "
-        f"{type(a_term).__name__} {op_string} {type(b_term).__name__}"
-    )
+        case _:
+            raise ValueError(
+                f"Unsupported operation: "
+                f"{type(a_term).__name__} {op_string} {type(b_term).__name__}"
+            )
 
 
 def format_temporal_object(obj: TemporalObject) -> str:

@@ -17,10 +17,10 @@ classifiers = [
 dependencies = [
     "parsedatetime>=2.6",
 ]
-#dynamic = ["dependencies"]
 
 [project.urls]
 Homepage = "https://github.com/backplane/datetimecalc"
+Documentation = "https://backplane.github.io/datetimecalc/"
 Repository = "https://github.com/backplane/datetimecalc.git"
 Changelog = "https://github.com/backplane/datetimecalc/releases"
 
@@ -29,10 +29,6 @@ datetimecalc = "datetimecalc:__main__.main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-#[tool.setuptools.dynamic]
-#dependencies = {file = ["requirements.txt"]}
-#optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules src"
@@ -46,4 +42,5 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
+    "pdoc3>=0.11.1",
 ]
