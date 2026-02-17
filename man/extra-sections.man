@@ -1,0 +1,108 @@
+[EXPRESSIONS]
+Expressions consist of temporal values (datetimes, timedeltas, or timezones)
+combined with operators.
+
+.SS Operators
+.TP
+.B +
+Add a timedelta to a datetime, or add two timedeltas.
+.TP
+.B \-
+Subtract a timedelta from a datetime, subtract two datetimes to get a
+timedelta, or subtract two timedeltas.
+.TP
+.B @
+Convert a datetime to a different timezone.
+.TP
+.BR < ", " <= ", " > ", " >= ", " == ", " !=
+Compare two datetimes or two timedeltas.
+
+.SS Datetime Formats
+Datetimes can be specified in various formats:
+.IP \(bu 2
+ISO format: 2024-01-15, 2024-01-15 14:30
+.IP \(bu 2
+Natural language: tomorrow, next Friday, yesterday at 3pm
+.IP \(bu 2
+With timezone: 2024-01-15 14:30 UTC, tomorrow America/New_York
+.IP \(bu 2
+With UTC offset: 2024-01-15 +05:30
+
+.SS Timedelta Formats
+Durations support various units and formats:
+.IP \(bu 2
+Full words: 1 day, 2 hours, 30 minutes
+.IP \(bu 2
+Abbreviations: 1d, 2h, 30m, 15s
+.IP \(bu 2
+Combined: 1 day 2 hours 30 minutes, 1d2h30m
+.IP \(bu 2
+Fractional: 1.5 hours, 2.5 days
+.PP
+Supported units: years (y), months (mo), weeks (w), days (d), hours (h),
+minutes (m), seconds (s), milliseconds (ms), microseconds (us).
+.PP
+.B Note:
+Years and months use fixed approximations (1 year = 365 days,
+1 month = 30 days).
+
+.SS Timezone Formats
+Timezones can be specified as:
+.IP \(bu 2
+IANA names: America/New_York, Europe/London, Asia/Tokyo
+.IP \(bu 2
+Abbreviations: UTC, EST, PST (where unambiguous)
+.IP \(bu 2
+UTC offsets: +05:30, -08:00
+
+[EXAMPLES]
+.TP
+Add one week to a date:
+.B datetimecalc \(dq2024-01-01 + 1 week\(dq
+.TP
+Calculate days until a date:
+.B datetimecalc \(dq2025-01-01 - now\(dq
+.TP
+Convert timezone:
+.B datetimecalc \(dq2024-01-01 12:00 America/New_York @ UTC\(dq
+.TP
+Compare durations:
+.B datetimecalc \(dq1 day == 24 hours\(dq
+.TP
+Natural language with multiple arguments (no quotes needed):
+.B datetimecalc tomorrow at 3pm + 2 hours
+.TP
+Get Python repr output:
+.B datetimecalc \-\-repr \(dq2025-01-01 - 2024-01-01\(dq
+
+[OUTPUT]
+By default, datetimes are formatted in ISO 8601 format and timedeltas
+are formatted in a human-readable localized form based on system locale.
+.PP
+With
+.BR \-\-repr ,
+output uses Python's repr() format (e.g., datetime.timedelta(days=7)).
+
+[LOCALIZATION]
+Timedelta output is automatically localized based on the system locale.
+Supported languages: English, Spanish, Chinese, Hindi, Portuguese,
+Bengali, Russian, Japanese, Vietnamese, Turkish, Marathi.
+
+[EXIT STATUS]
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error parsing expression or invalid input.
+
+[SEE ALSO]
+.BR date (1),
+.BR python3 (1)
+
+[BUGS]
+Only single binary operations are supported. Chained expressions like
+"a + b + c" do not work; use separate invocations or parentheses in a shell.
+
+[COPYRIGHT]
+Copyright \(co 2024-2026 Backplane. Licensed under the Apache License 2.0.

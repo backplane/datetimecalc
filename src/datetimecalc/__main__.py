@@ -13,21 +13,28 @@ Usage:
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 
 from .functions import format_temporal_object, parse_temporal_expr
 
 
-def main() -> int:
+def get_parser() -> argparse.ArgumentParser:
     """
-    entrypoint for direct execution; returns an integer suitable for use with
-    sys.exit
+    Build and return the argument parser for datetimecalc.
+
+    This function is also used by argparse-manpage to generate the manpage.
     """
     argp = argparse.ArgumentParser(
-        prog=__package__,
+        prog="datetimecalc",
         description=(
             "program which parses natural language datetime and timedelta expressions"
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    argp.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {version('datetimecalc')}",
     )
     argp.add_argument(
         "--debug",
@@ -45,6 +52,15 @@ def main() -> int:
         nargs="+",
         help="a natural language date and time operation expression",
     )
+    return argp
+
+
+def main() -> int:
+    """
+    entrypoint for direct execution; returns an integer suitable for use with
+    sys.exit
+    """
+    argp = get_parser()
     args = argp.parse_args()
 
     logging.basicConfig(

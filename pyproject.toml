@@ -46,4 +46,5 @@ build-backend = "uv_build"
 dev = [
     "pytest>=8.4.2",
     "pdoc3>=0.11.1",
+    "argparse-manpage>=4.7",
 ]
